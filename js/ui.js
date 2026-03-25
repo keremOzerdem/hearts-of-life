@@ -22,6 +22,11 @@ const UI = {
         this.updateJournal();
         this.updateAchievements();
         this.updateAdvisor();
+        this.updateProductivityScore();
+        this.updateWeeklyGoals();
+        this.updateQuickNotes();
+        this.renderActivityHeatmap();
+        this.updateFocusModeBtn();
     },
 
     // ═══════════════ TOP BAR ═══════════════
@@ -2208,5 +2213,266 @@ Derin Çalışma, 09:00"></textarea>
     escapeHtml(str) {
         if (!str) return '';
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+
+    // ═══════════════ MORNING BRIEFING ═══════════════
+    showMorningBriefing() {
+        if (!Engine.shouldShowBriefing()) return;
+        Engine.markBriefingShown();
+
+        const s = State.current;
+        const todayStr = State.getTodayString();
+        const score = Engine.calculateProductivityScore();
+        const advices = Engine.getAdvisorBriefing().slice(0, 3);
+
+        // Gather today's summary
+        const uncompleted = s.dailyObjectives.filter(o => !o.completedToday).length;
+        const totalObj = s.dailyObjectives.length;
+        const focusInfo = s.focus.current ? `🎯 ${s.focus.current} (${s.focus.daysRemaining} gün kaldı)` : '❌ Odak seçilmedi';
+        const researchInfo = `${s.research.active.length}/${s.researchSlots} araştırma aktif`;
+        const pomosToday = s.pomodoro.completedToday || 0;
+        const streakEmoji = s.streak.current > 0 ? '🔥'.repeat(Math.min(5, s.streak.current)) : '—';
+        const weekDay = State.getWeekDay();
+
+        // Yesterday's score
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yStr = yesterday.toISOString().slice(0, 10);
+        const yScore = s.activityLog[yStr] || 0;
+
+        let body = `
+            <div class="briefing-header">
+                <div class="briefing-date">${weekDay}, ${State.getDateString()}</div>
+                <div class="briefing-greeting">Günaydın, Komutan ${this.escapeHtml(s.profile.name)}!</div>
+            </div>
+            <div class="briefing-grid">
+                <div class="briefing-stat">
+                    <div class="briefing-stat-value">${s.streak.current}</div>
+                    <div class="briefing-stat-label">${streakEmoji} Gün Seri</div>
+                </div>
+                <div class="briefing-stat">
+                    <div class="briefing-stat-value">${yScore}</div>
+                    <div class="briefing-stat-label">📊 Dünkü Skor</div>
+                </div>
+                <div class="briefing-stat">
+                    <div class="briefing-stat-value">${uncompleted}/${totalObj}</div>
+                    <div class="briefing-stat-label">✅ Görev Bekliyor</div>
+                </div>
+                <div class="briefing-stat">
+                    <div class="briefing-stat-value">${pomosToday}</div>
+                    <div class="briefing-stat-label">🍅 Bugünkü Pomo</div>
+                </div>
+            </div>
+            <div class="briefing-info">
+                <div>${focusInfo}</div>
+                <div>🔬 ${researchInfo}</div>
+            </div>`;
+
+        if (advices.length > 0) {
+            body += `<div class="briefing-advices"><h4>🎖 Kurmay Tavsiyeler:</h4>`;
+            for (const a of advices) {
+                body += `<div class="briefing-advice">${a.icon} <strong>${a.title}</strong> — ${a.text}</div>`;
+            }
+            body += `</div>`;
+        }
+
+        // Weekly goals reminder
+        Engine.checkWeeklyGoalsReset();
+        const wGoals = s.weeklyGoals;
+        const wDone = wGoals.filter(g => g.done).length;
+        if (wGoals.length > 0) {
+            body += `<div class="briefing-weekly">📋 Haftalık Hedef: ${wDone}/${wGoals.length} tamamlandı</div>`;
+        }
+
+        this.showModal({
+            title: '☀ Sabah Brifing',
+            body: body,
+            buttons: [
+                { text: '🧘 Odak Moduna Geç', class: 'secondary', action: () => { UI.closeModal(); Engine.toggleFocusMode(); } },
+                { text: 'Haydi Başlayalım!', class: 'primary', action: () => UI.closeModal() }
+            ]
+        });
+    },
+
+    // ═══════════════ PRODUCTIVITY SCORE WIDGET ═══════════════
+    updateProductivityScore() {
+        const el = document.getElementById('productivity-widget');
+        if (!el) return;
+
+        const result = Engine.calculateProductivityScore();
+        const score = result.score;
+        const bd = result.breakdown;
+
+        let grade, gradeClass;
+        if (score >= 80) { grade = 'S'; gradeClass = 'grade-s'; }
+        else if (score >= 60) { grade = 'A'; gradeClass = 'grade-a'; }
+        else if (score >= 40) { grade = 'B'; gradeClass = 'grade-b'; }
+        else if (score >= 20) { grade = 'C'; gradeClass = 'grade-c'; }
+        else { grade = 'D'; gradeClass = 'grade-d'; }
+
+        el.innerHTML = `
+            <div class="prod-score-ring">
+                <svg viewBox="0 0 100 100" class="prod-svg">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border)" stroke-width="6"/>
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="6"
+                        stroke-dasharray="${score * 2.64} ${264 - score * 2.64}"
+                        stroke-dashoffset="66" stroke-linecap="round"
+                        style="transition: stroke-dasharray 0.8s ease"/>
+                </svg>
+                <div class="prod-score-center">
+                    <span class="prod-score-num">${score}</span>
+                    <span class="prod-score-grade ${gradeClass}">${grade}</span>
+                </div>
+            </div>
+            <div class="prod-breakdown">
+                <div class="prod-bar-row"><span>🍅 Pomodoro</span><div class="prod-bar"><div style="width:${bd.pomodoro * 4}%"></div></div><span>${bd.pomodoro}</span></div>
+                <div class="prod-bar-row"><span>✅ Görevler</span><div class="prod-bar"><div style="width:${bd.objectives * 4}%"></div></div><span>${bd.objectives}</span></div>
+                <div class="prod-bar-row"><span>📓 Günlük</span><div class="prod-bar"><div style="width:${bd.journal * 10}%"></div></div><span>${bd.journal}</span></div>
+                <div class="prod-bar-row"><span>🎯 Odak</span><div class="prod-bar"><div style="width:${bd.focus * 10}%"></div></div><span>${bd.focus}</span></div>
+                <div class="prod-bar-row"><span>🔬 Araştırma</span><div class="prod-bar"><div style="width:${bd.research * 10}%"></div></div><span>${bd.research}</span></div>
+                <div class="prod-bar-row"><span>🔥 Seri</span><div class="prod-bar"><div style="width:${bd.streak * 10}%"></div></div><span>${bd.streak}</span></div>
+            </div>
+        `;
+    },
+
+    // ═══════════════ WEEKLY GOALS ═══════════════
+    updateWeeklyGoals() {
+        const el = document.getElementById('weekly-goals-widget');
+        if (!el) return;
+
+        Engine.checkWeeklyGoalsReset();
+        const s = State.current;
+        const goals = s.weeklyGoals;
+        const weekStr = s.weeklyGoalsWeek || '';
+
+        let html = `<div class="weekly-goals-header">
+            <span class="weekly-goals-week">${weekStr}</span>
+            <span class="weekly-goals-progress">${goals.filter(g => g.done).length}/${goals.length}</span>
+        </div>`;
+
+        if (goals.length === 0) {
+            html += `<div style="color:var(--text-dim);font-size:13px;padding:6px">Bu hafta için hedef eklenmedi</div>`;
+        } else {
+            html += `<div class="weekly-goals-list">`;
+            for (const g of goals) {
+                html += `<div class="weekly-goal-item ${g.done ? 'done' : ''}">
+                    <label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">
+                        <input type="checkbox" ${g.done ? 'checked' : ''} onchange="Engine.toggleWeeklyGoal(${g.id}); UI.updateWeeklyGoals()">
+                        <span>${this.escapeHtml(g.text)}</span>
+                    </label>
+                    <button class="delete-btn-small" onclick="Engine.removeWeeklyGoal(${g.id}); UI.updateWeeklyGoals()" title="Sil">✕</button>
+                </div>`;
+            }
+            html += `</div>`;
+        }
+
+        html += `<div class="weekly-goal-add">
+            <input type="text" id="weekly-goal-input" placeholder="Yeni haftalık hedef..." 
+                   onkeydown="if(event.key==='Enter'){UI.addWeeklyGoalFromInput()}" maxlength="100">
+            <button class="hoi-btn small" onclick="UI.addWeeklyGoalFromInput()">+</button>
+        </div>`;
+
+        el.innerHTML = html;
+    },
+
+    addWeeklyGoalFromInput() {
+        const input = document.getElementById('weekly-goal-input');
+        if (!input || !input.value.trim()) return;
+        Engine.addWeeklyGoal(input.value);
+        input.value = '';
+        this.updateWeeklyGoals();
+    },
+
+    // ═══════════════ QUICK NOTES ═══════════════
+    updateQuickNotes() {
+        const el = document.getElementById('quick-notes-widget');
+        if (!el) return;
+
+        el.innerHTML = `
+            <textarea id="quick-notes-textarea" rows="5" placeholder="Hızlı notlar, fikirler, yapılacaklar..."
+                      style="width:100%;box-sizing:border-box;background:var(--bg-dark);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:8px;font-size:13px;resize:vertical;font-family:inherit"
+                      oninput="Engine.saveQuickNotes(this.value)">${this.escapeHtml(State.current.quickNotes || '')}</textarea>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">💡 Otomatik kaydedilir</div>
+        `;
+    },
+
+    // ═══════════════ ACTIVITY HEATMAP ═══════════════
+    renderActivityHeatmap() {
+        const el = document.getElementById('activity-heatmap');
+        if (!el) return;
+
+        const log = State.current.activityLog || {};
+        const today = new Date();
+        const weeks = 20; // Show ~5 months
+        const totalDays = weeks * 7;
+
+        // Build day cells going back from today
+        let html = `<div class="heatmap-container">`;
+
+        // Month labels
+        html += `<div class="heatmap-months">`;
+        const seenMonths = {};
+        for (let i = totalDays - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const monthKey = d.getMonth();
+            const weekIdx = Math.floor((totalDays - 1 - i) / 7);
+            if (!seenMonths[monthKey]) {
+                seenMonths[monthKey] = weekIdx;
+            }
+        }
+        const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+        let lastMonthPx = -1;
+        for (const [month, weekIdx] of Object.entries(seenMonths)) {
+            const left = weekIdx * 14;
+            if (left - lastMonthPx > 28) {
+                html += `<span style="left:${left}px">${monthNames[parseInt(month)]}</span>`;
+                lastMonthPx = left;
+            }
+        }
+        html += `</div>`;
+
+        // Grid
+        html += `<div class="heatmap-grid" style="grid-template-columns:repeat(${weeks},12px)">`;
+        for (let i = totalDays - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().slice(0, 10);
+            const score = log[dateStr] || 0;
+
+            let level;
+            if (score === 0) level = 0;
+            else if (score < 20) level = 1;
+            else if (score < 40) level = 2;
+            else if (score < 60) level = 3;
+            else level = 4;
+
+            const title = `${dateStr}: ${score} puan`;
+            html += `<div class="heatmap-cell level-${level}" title="${title}"></div>`;
+        }
+        html += `</div>`;
+
+        // Legend
+        html += `<div class="heatmap-legend">
+            <span>Az</span>
+            <div class="heatmap-cell level-0"></div>
+            <div class="heatmap-cell level-1"></div>
+            <div class="heatmap-cell level-2"></div>
+            <div class="heatmap-cell level-3"></div>
+            <div class="heatmap-cell level-4"></div>
+            <span>Çok</span>
+        </div>`;
+
+        html += `</div>`;
+        el.innerHTML = html;
+    },
+
+    // ═══════════════ FOCUS MODE BUTTON ═══════════════
+    updateFocusModeBtn() {
+        const btn = document.getElementById('focus-mode-btn');
+        if (!btn) return;
+        const active = State.current.focusModeActive;
+        btn.textContent = active ? '🔓 Odak Modundan Çık' : '🧘 Odak Modu';
+        btn.className = active ? 'hoi-btn danger' : 'hoi-btn secondary';
     }
 };

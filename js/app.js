@@ -68,7 +68,20 @@ const App = {
         console.log('✅ Hearts of Life — Hazır!');
         if (State.current.onboardingDone) {
             UI.toast('⚔ Hearts of Life başlatıldı! İyi oyunlar, Komutan!', 'success');
+            // Show morning briefing (once per day)
+            setTimeout(() => UI.showMorningBriefing(), 800);
         }
+
+        // Restore focus mode if was active
+        if (State.current.focusModeActive) {
+            document.body.classList.add('focus-mode');
+        }
+
+        // Record productivity periodically (every 5 min)
+        setInterval(() => {
+            Engine.recordProductivity();
+            UI.updateProductivityScore();
+        }, 300000);
 
         // Initialize Firebase Auth (non-blocking)
         if (typeof Auth !== 'undefined') {

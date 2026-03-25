@@ -175,6 +175,25 @@ const State = {
             // Undo stack (state snapshots)
             undoStack: [],
 
+            // Quick Notes (scratchpad)
+            quickNotes: '',
+
+            // Weekly Goals
+            weeklyGoals: [],  // [{id, text, done, createdDate}]
+            weeklyGoalsWeek: null,  // ISO week string e.g. "2026-W13"
+
+            // Productivity score history
+            productivityHistory: [],  // [{date, score, breakdown}]
+
+            // Morning briefing last shown date
+            lastBriefingDate: null,
+
+            // Focus mode active
+            focusModeActive: false,
+
+            // Activity log for heatmap
+            activityLog: {},  // { "2026-03-25": score }
+
             // User-defined game content
             userData: {
                 focusBranches: [],
@@ -290,6 +309,14 @@ const State = {
         if (save.soundEnabled === undefined) save.soundEnabled = true;
         if (save.notificationsEnabled === undefined) save.notificationsEnabled = false;
         if (!save.undoStack) save.undoStack = [];
+        // New: productivity features
+        if (save.quickNotes === undefined) save.quickNotes = '';
+        if (!save.weeklyGoals) save.weeklyGoals = [];
+        if (!save.weeklyGoalsWeek) save.weeklyGoalsWeek = null;
+        if (!save.productivityHistory) save.productivityHistory = [];
+        if (!save.lastBriefingDate) save.lastBriefingDate = null;
+        if (save.focusModeActive === undefined) save.focusModeActive = false;
+        if (!save.activityLog) save.activityLog = {};
         return save;
     },
 

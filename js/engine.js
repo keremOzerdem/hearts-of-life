@@ -282,7 +282,13 @@ const Engine = {
         // 21. Update streak
         this.updateStreak();
 
-        // 22. Save
+        // 22. Record productivity score
+        this.recordProductivity();
+
+        // 23. Check weekly goals reset
+        this.checkWeeklyGoalsReset();
+
+        // 24. Save
         State.save();
 
         // 21. Update UI
@@ -1890,5 +1896,172 @@ const Engine = {
         UI.updateAll();
         this.playSound('success');
         UI.toast(`🏁 "${tmpl.name}" şablonu uygulandı!`, 'success');
+    },
+
+    // ═══════════════ PRODUCTIVITY SCORE ═══════════════
+    calculateProductivityScore() {
+        const s = State.current;
+        const todayStr = State.getTodayString();
+        let score = 0;
+        const breakdown = {};
+
+        // Pomodoros completed today (max 25pts for 5 pomodoros)
+        const pomos = s.pomodoro.completedToday || 0;
+        breakdown.pomodoro = Math.min(25, pomos * 5);
+        score += breakdown.pomodoro;
+
+        // Daily objectives completed (max 25pts)
+        const totalObj = s.dailyObjectives.length || 1;
+        const doneObj = s.dailyObjectives.filter(o => o.completedToday).length;
+        breakdown.objectives = Math.round((doneObj / totalObj) * 25);
+        score += breakdown.objectives;
+
+        // Journal entry today (10pts)
+        const hasJournal = s.journal.some(j => j.date === todayStr);
+        breakdown.journal = hasJournal ? 10 : 0;
+        score += breakdown.journal;
+
+        // Active focus running (10pts)
+        breakdown.focus = s.focus.current ? 10 : 0;
+        score += breakdown.focus;
+
+        // Research slots filled (max 10pts)
+        const researchFill = s.researchSlots > 0 ? (s.research.active.length / s.researchSlots) : 0;
+        breakdown.research = Math.round(researchFill * 10);
+        score += breakdown.research;
+
+        // Streak bonus (max 10pts)
+        breakdown.streak = Math.min(10, (s.streak.current || 0));
+        score += breakdown.streak;
+
+        // Resource health: avg of stability + health + energy (max 10pts)
+        const avg = (s.resources.stability + s.resources.health + Math.min(100, s.resources.energy)) / 3;
+        breakdown.resources = Math.round(avg / 10);
+        score += breakdown.resources;
+
+        // Weekly goals done bonus (max 10pts)
+        const weekGoals = s.weeklyGoals || [];
+        const goalsDone = weekGoals.filter(g => g.done).length;
+        const totalGoals = weekGoals.length || 1;
+        breakdown.weeklyGoals = Math.round((goalsDone / totalGoals) * 10);
+        score += breakdown.weeklyGoals;
+
+        return { score: Math.min(100, score), breakdown };
+    },
+
+    // Record daily productivity
+    recordProductivity() {
+        const s = State.current;
+        const todayStr = State.getTodayString();
+        const result = this.calculateProductivityScore();
+
+        // Update activity log for heatmap
+        s.activityLog[todayStr] = result.score;
+
+        // Save to history (keep last 90 days)
+        const existing = s.productivityHistory.findIndex(p => p.date === todayStr);
+        if (existing >= 0) {
+            s.productivityHistory[existing] = { date: todayStr, score: result.score, breakdown: result.breakdown };
+        } else {
+            s.productivityHistory.push({ date: todayStr, score: result.score, breakdown: result.breakdown });
+        }
+        if (s.productivityHistory.length > 90) {
+            s.productivityHistory = s.productivityHistory.slice(-90);
+        }
+
+        // Trim activity log (keep last 365 days)
+        const keys = Object.keys(s.activityLog).sort();
+        if (keys.length > 365) {
+            for (let i = 0; i < keys.length - 365; i++) {
+                delete s.activityLog[keys[i]];
+            }
+        }
+    },
+
+    // ═══════════════ WEEKLY GOALS ═══════════════
+    getCurrentWeekStr() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 1);
+        const diff = (now - start + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60000)) / 86400000;
+        const weekNum = Math.ceil((diff + start.getDay() + 1) / 7);
+        return `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+    },
+
+    checkWeeklyGoalsReset() {
+        const s = State.current;
+        const currentWeek = this.getCurrentWeekStr();
+        if (s.weeklyGoalsWeek !== currentWeek) {
+            // Archive old goals if they exist
+            if (s.weeklyGoals.length > 0 && s.weeklyGoalsWeek) {
+                // Just reset — old goals are lost (could archive in future)
+            }
+            s.weeklyGoals = [];
+            s.weeklyGoalsWeek = currentWeek;
+        }
+    },
+
+    addWeeklyGoal(text) {
+        const s = State.current;
+        this.checkWeeklyGoalsReset();
+        s.weeklyGoals.push({
+            id: Date.now(),
+            text: text.trim(),
+            done: false,
+            createdDate: State.getTodayString()
+        });
+        State.save();
+    },
+
+    toggleWeeklyGoal(id) {
+        const s = State.current;
+        const goal = s.weeklyGoals.find(g => g.id === id);
+        if (goal) {
+            goal.done = !goal.done;
+            if (goal.done) {
+                this.addXP(10, 'Haftalık hedef tamamlandı');
+                this.playSound('success');
+            }
+            State.save();
+        }
+    },
+
+    removeWeeklyGoal(id) {
+        const s = State.current;
+        s.weeklyGoals = s.weeklyGoals.filter(g => g.id !== id);
+        State.save();
+    },
+
+    // ═══════════════ FOCUS MODE ═══════════════
+    toggleFocusMode() {
+        const s = State.current;
+        s.focusModeActive = !s.focusModeActive;
+        document.body.classList.toggle('focus-mode', s.focusModeActive);
+
+        if (s.focusModeActive) {
+            UI.toast('🧘 Odak Modu açıldı — dikkat dağıtıcılar gizlendi', 'info');
+            this.playSound('click');
+        } else {
+            UI.toast('Odak Modu kapatıldı', 'info');
+        }
+        State.save();
+    },
+
+    // ═══════════════ QUICK NOTES ═══════════════
+    saveQuickNotes(text) {
+        State.current.quickNotes = text;
+        State.save();
+    },
+
+    // ═══════════════ MORNING BRIEFING ═══════════════
+    shouldShowBriefing() {
+        const s = State.current;
+        if (!s.onboardingDone) return false;
+        const todayStr = State.getTodayString();
+        return s.lastBriefingDate !== todayStr;
+    },
+
+    markBriefingShown() {
+        State.current.lastBriefingDate = State.getTodayString();
+        State.save();
     }
 };

@@ -222,7 +222,21 @@
                         <h3>⭐ Seviye & Deneyim</h3>
                         <div id="xp-widget"></div>
                     </div>
+                    <div class="dash-card productivity-card">
+                        <h3>📊 Verimlilik Skoru</h3>
+                        <div id="productivity-widget"></div>
+                    </div>
+                    <div class="dash-card weekly-goals-card">
+                        <h3>📋 Haftalık Hedefler</h3>
+                        <div id="weekly-goals-widget"></div>
+                    </div>
+                    <div class="dash-card quick-notes-card">
+                        <h3>📝 Hızlı Notlar</h3>
+                        <div id="quick-notes-widget"></div>
+                    </div>
                 </div>
+                <!-- Focus Mode Button -->
+                <button id="focus-mode-btn" class="hoi-btn secondary" onclick="Engine.toggleFocusMode()" style="position:fixed;bottom:60px;right:20px;z-index:100;border-radius:50px;padding:10px 18px;box-shadow:0 4px 12px rgba(0,0,0,0.5)">🧘 Odak Modu</button>
             </section>
 
             <!-- FOCUS TREE -->
@@ -360,6 +374,10 @@
                     <p class="tab-subtitle">Kaynak değişimlerin ve haftalık raporlar. Tüm ilerlemen burada özetleniyor.</p>
                 </div>
                 <div id="stats-content" class="stats-grid"></div>
+                <div class="heatmap-section" style="margin-top:20px">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">🟩 Aktivite Isı Haritası</h3>
+                    <div id="activity-heatmap"></div>
+                </div>
                 <div class="resource-charts-section" style="margin-top:20px">
                     <h3 style="color:var(--text-gold);margin-bottom:10px">📈 Kaynak Grafikleri</h3>
                     <div id="resource-charts"></div>
