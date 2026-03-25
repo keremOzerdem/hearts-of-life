@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearts of Life — Hayatın Stratejisi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ═══════════════ TOP BAR — Resource Bar ═══════════════ -->
+    <header id="top-bar">
+        <div class="top-bar-left">
+            <button class="hamburger-btn" onclick="App.toggleMobileMenu()" aria-label="Menü">☰</button>
+            <div class="game-logo">
+                <span class="logo-icon">⚔</span>
+                <span class="logo-text">Hearts of Life</span>
+            </div>
+            <div class="date-display" id="date-display">1 Ocak 2026</div>
+        </div>
+        <div class="top-bar-resources" id="resource-bar">
+            <div class="resource" title="Siyasi Güç (İrade)">
+                <span class="res-icon">👑</span>
+                <span class="res-label">İrade</span>
+                <span class="res-value" id="res-political-power">50</span>
+                <span class="res-daily" id="res-pp-daily">+2/gün</span>
+            </div>
+            <div class="resource" title="İstikrar (Ruh Hali)">
+                <span class="res-icon">⚖</span>
+                <span class="res-label">İstikrar</span>
+                <span class="res-value" id="res-stability">70%</span>
+            </div>
+            <div class="resource" title="Savaş Desteği (Motivasyon)">
+                <span class="res-icon">🔥</span>
+                <span class="res-label">Motivasyon</span>
+                <span class="res-value" id="res-war-support">60%</span>
+            </div>
+            <div class="resource-divider"></div>
+            <div class="resource" title="İnsan Gücü (Enerji)">
+                <span class="res-icon">⚡</span>
+                <span class="res-label">Enerji</span>
+                <span class="res-value" id="res-manpower">100</span>
+            </div>
+            <div class="resource" title="Para (Bütçe)">
+                <span class="res-icon">💰</span>
+                <span class="res-label">Para</span>
+                <span class="res-value" id="res-money">1000₺</span>
+            </div>
+            <div class="resource" title="Sağlık">
+                <span class="res-icon">❤</span>
+                <span class="res-label">Sağlık</span>
+                <span class="res-value" id="res-health">80%</span>
+            </div>
+            <div class="resource" title="Sosyal Enerji">
+                <span class="res-icon">🤝</span>
+                <span class="res-label">Sosyal</span>
+                <span class="res-value" id="res-social">50</span>
+            </div>
+            <div class="resource-divider"></div>
+            <div class="resource factory-res" title="Sivil Fabrika (Üretken Alışkanlıklar)">
+                <span class="res-icon fac-civ">🏭</span>
+                <span class="res-value" id="res-civ-factories">5</span>
+            </div>
+            <div class="resource factory-res" title="Askeri Fabrika (Disiplin Alışkanlıkları)">
+                <span class="res-icon fac-mil">🏗</span>
+                <span class="res-value" id="res-mil-factories">3</span>
+            </div>
+            <div class="resource-divider"></div>
+            <div class="resource xp-bar-resource" title="Deneyim & Seviye">
+                <span class="res-icon">⭐</span>
+                <span class="res-label" id="xp-level">Lv.1</span>
+                <div class="xp-bar-mini">
+                    <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
+                </div>
+                <span class="res-value" id="xp-rank">Er</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
+    <div id="main-container">
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="App.toggleMobileMenu()"></div>
+        <!-- ═══════════════ LEFT SIDEBAR — Navigation ═══════════════ -->
+        <nav id="sidebar">
+            <button class="nav-btn active" data-tab="dashboard" title="Genel Bakış">
+                <span class="nav-icon">🗺</span>
+                <span class="nav-label">Genel Bakış</span>
+            </button>
+            <button class="nav-btn" data-tab="focus" title="Ulusal Odak Ağacı">
+                <span class="nav-icon">🎯</span>
+                <span class="nav-label">Odak Ağacı</span>
+            </button>
+            <button class="nav-btn" data-tab="research" title="Araştırma">
+                <span class="nav-icon">🔬</span>
+                <span class="nav-label">Araştırma</span>
+            </button>
+            <button class="nav-btn" data-tab="production" title="Üretim">
+                <span class="nav-icon">⚙</span>
+                <span class="nav-label">Üretim</span>
+            </button>
+            <button class="nav-btn" data-tab="military" title="Tümenler (Rutinler)">
+                <span class="nav-icon">🎖</span>
+                <span class="nav-label">Tümenler</span>
+            </button>
+            <button class="nav-btn" data-tab="diplomacy" title="Diplomasi">
+                <span class="nav-icon">🤝</span>
+                <span class="nav-label">Diplomasi</span>
+            </button>
+            <button class="nav-btn" data-tab="war" title="Savaş (Hedef Seferleri)">
+                <span class="nav-icon">⚔</span>
+                <span class="nav-label">Savaş</span>
+            </button>
+            <button class="nav-btn" data-tab="decisions" title="Kararlar">
+                <span class="nav-icon">📜</span>
+                <span class="nav-label">Kararlar</span>
+            </button>
+            <button class="nav-btn" data-tab="spirits" title="Ulusal Ruhlar">
+                <span class="nav-icon">✨</span>
+                <span class="nav-label">Ulusal Ruhlar</span>
+            </button>
+            <button class="nav-btn" data-tab="stats" title="İstatistikler">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">İstatistikler</span>
+            </button>
+            <button class="nav-btn" data-tab="journal" title="Günlük">
+                <span class="nav-icon">📓</span>
+                <span class="nav-label">Günlük</span>
+            </button>
+            <button class="nav-btn" data-tab="achievements" title="Başarımlar">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Başarımlar</span>
+            </button>
+            <button class="nav-btn" data-tab="advisor" title="Kurmay General">
+                <span class="nav-icon">🎖</span>
+                <span class="nav-label">General</span>
+            </button>
+            <button class="nav-btn" data-tab="settings" title="Ayarlar">
+                <span class="nav-icon">⚙</span>
+                <span class="nav-label">Ayarlar</span>
+            </button>
+        </nav>
+
+        <!-- ═══════════════ CONTENT AREA ═══════════════ -->
+        <main id="content-area">
+            <!-- DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="dash-card nation-card">
+                        <div class="nation-flag" id="player-flag">👤</div>
+                        <h2 id="player-name">Komutan</h2>
+                        <div class="nation-type" id="player-title">Hayatının Lideri</div>
+                        <div class="nation-party">
+                            <span>İdeoloji:</span>
+                            <span id="player-ideology">Demokratik</span>
+                        </div>
+                    </div>
+                    <div class="dash-card summary-card">
+                        <h3>📋 Günlük Özet</h3>
+                        <div id="daily-summary">
+                            <div class="summary-row">
+                                <span>Aktif Odak:</span>
+                                <span id="summary-focus">Seçilmedi</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Araştırma:</span>
+                                <span id="summary-research">0/2 slot dolu</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Üretim Hatları:</span>
+                                <span id="summary-production">0 aktif</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Aktif Tümenler:</span>
+                                <span id="summary-divisions">0</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Bekleyen Kararlar:</span>
+                                <span id="summary-decisions">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dash-card spirits-preview">
+                        <h3>✨ Ulusal Ruhlar</h3>
+                        <div id="spirits-list-preview" class="spirits-grid"></div>
+                    </div>
+                    <div class="dash-card events-card">
+                        <h3>📰 Son Olaylar</h3>
+                        <div id="recent-events-list"></div>
+                    </div>
+                    <div class="dash-card alerts-card">
+                        <h3>⚠ Uyarılar</h3>
+                        <div id="alerts-list"></div>
+                    </div>
+                    <div class="dash-card progress-card">
+                        <h3>📈 İlerleme</h3>
+                        <div class="progress-bars" id="progress-bars"></div>
+                    </div>
+                    <div class="dash-card objectives-card">
+                        <h3>✅ Günlük Görevler</h3>
+                        <div id="daily-objectives-list"></div>
+                        <button class="hoi-btn small" style="margin-top:8px" onclick="UI.showAddObjectiveModal()">+ Görev Ekle</button>
+                    </div>
+                    <div class="dash-card pomodoro-card">
+                        <h3>🍅 Pomodoro</h3>
+                        <div id="pomodoro-widget"></div>
+                    </div>
+                    <div class="dash-card xp-card">
+                        <h3>⭐ Seviye & Deneyim</h3>
+                        <div id="xp-widget"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FOCUS TREE -->
+            <section id="tab-focus" class="tab-content">
+                <div class="tab-header">
+                    <h2>🎯 Ulusal Odak Ağacı</h2>
+                    <p class="tab-subtitle">Uzun vadeli hedeflerin ve projeler. Kariyer planı, kişisel gelişim, büyük yaşam değişiklikleri buraya.</p>
+                    <div class="focus-info">
+                        <span>Aktif Odak: <strong id="current-focus-name">Yok</strong></span>
+                        <span>Kalan Gün: <strong id="focus-days-left">—</strong></span>
+                    </div>
+                </div>
+                <div class="focus-controls" style="margin-bottom:10px">
+                    <button class="hoi-btn" onclick="UI.showCreateBranchModal()">+ Dal Ekle</button>
+                    <button class="hoi-btn" onclick="UI.showCreateFocusModal()">+ Odak Ekle</button>
+                </div>
+                <div id="focus-tree-container" class="focus-tree"></div>
+            </section>
+
+            <!-- RESEARCH -->
+            <section id="tab-research" class="tab-content">
+                <div class="tab-header">
+                    <h2>🔬 Araştırma</h2>
+                    <p class="tab-subtitle">Öğrendiğin yeni beceriler ve bilgiler. Kurs, kitap, dil öğrenme, yemek yapma gibi öğrenme süreçleri buraya.</p>
+                    <div class="research-slots">
+                        Araştırma Slotları: <strong id="research-slot-count">0/2</strong>
+                    </div>
+                </div>
+                <div class="research-controls" style="margin-bottom:10px">
+                    <button class="hoi-btn" onclick="UI.showCreateTechCategoryModal()">+ Kategori</button>
+                    <button class="hoi-btn" onclick="UI.showCreateTechModal()">+ Teknoloji</button>
+                </div>
+                <div id="active-research" class="active-research-panel"></div>
+                <div class="research-categories" id="research-categories"></div>
+            </section>
+
+            <!-- PRODUCTION -->
+            <section id="tab-production" class="tab-content">
+                <div class="tab-header">
+                    <h2>⚙ Üretim</h2>
+                    <p class="tab-subtitle">Tekrar eden günlük görevler ve alışkanlık inşası. Günlük yapılacaklar listesi, alışkanlık kazanma projeleri buraya.</p>
+                    <div class="production-info">
+                        Sivil Fabrika: <strong id="prod-civ">5</strong> |
+                        Askeri Fabrika: <strong id="prod-mil">3</strong>
+                    </div>
+                </div>
+                <div class="production-controls">
+                    <button class="hoi-btn" onclick="UI.showAddProductionModal()">+ Üretim Hattı Ekle</button>
+                    <button class="hoi-btn secondary" onclick="UI.showCreateProductionItemModal()">+ Özel Üretim Öğesi</button>
+                </div>
+                <div id="production-lines" class="production-lines"></div>
+                <div class="construction-section">
+                    <h3>🏗 İnşaat (Alışkanlık İnşası)</h3>
+                    <div id="construction-queue" class="construction-queue"></div>
+                    <button class="hoi-btn" onclick="UI.showAddConstructionModal()">+ İnşaat Başlat</button>
+                    <button class="hoi-btn secondary" onclick="UI.showCreateConstructionItemModal()">+ Özel İnşaat Öğesi</button>
+                </div>
+            </section>
+
+            <!-- MILITARY (DIVISIONS/ROUTINES) -->
+            <section id="tab-military" class="tab-content">
+                <div class="tab-header">
+                    <h2>🎖 Tümenler (Günlük Rutinler)</h2>
+                    <p class="tab-subtitle">Saatli günlük rutinlerin. Sabah rutini, akşam rutini, spor programı gibi zamanlı aktivite şablonları buraya.</p>
+                </div>
+                <div class="military-controls">
+                    <button class="hoi-btn" onclick="UI.showAddDivisionModal()">+ Tümen Oluştur</button>
+                    <button class="hoi-btn secondary" onclick="UI.showTemplateEditor()">📋 Şablon Düzenleyici</button>
+                    <button class="hoi-btn secondary" onclick="UI.showCreateTemplateModal()">+ Şablon Oluştur</button>
+                </div>
+                <div id="divisions-list" class="divisions-list"></div>
+            </section>
+
+            <!-- DIPLOMACY -->
+            <section id="tab-diplomacy" class="tab-content">
+                <div class="tab-header">
+                    <h2>🤝 Diplomasi</h2>
+                    <p class="tab-subtitle">Sosyal çevren ve ilişkilerin. Aile, arkadaşlar, iş arkadaşları — kiminle ne sıklıkta görüştüğünü takip et.</p>
+                </div>
+                <div class="diplomacy-controls">
+                    <button class="hoi-btn" onclick="UI.showAddRelationModal()">+ Kişi Ekle</button>
+                </div>
+                <div id="diplomacy-list" class="diplomacy-list"></div>
+            </section>
+
+            <!-- WAR / CAMPAIGNS -->
+            <section id="tab-war" class="tab-content">
+                <div class="tab-header">
+                    <h2>⚔ Savaş — Hedef Seferleri</h2>
+                    <p class="tab-subtitle">Büyük mücadele ve meydan okumalar. Kilo verme, sınav hazırlığı, borç kapatma gibi aşamalı savaşlar buraya.</p>
+                    <div class="war-summary">
+                        Aktif Cephe: <strong id="war-active-fronts">0</strong> |
+                        Fethedilen Bölge: <strong id="war-conquered">0</strong> |
+                        Toplam Saldırı Gücü: <strong id="war-attack-power">0</strong>
+                    </div>
+                </div>
+                <div class="war-controls">
+                    <button class="hoi-btn primary" onclick="UI.showNewCampaignModal()">⚔ Yeni Sefer Başlat</button>
+                    <button class="hoi-btn secondary" onclick="UI.showCreateCampaignModal()">+ Sefer Oluştur</button>
+                    <button class="hoi-btn secondary" onclick="UI.showCustomProvinceModal()">🗺 Özel Bölge Ekle</button>
+                </div>
+                <div id="war-campaigns-list" class="war-campaigns"></div>
+            </section>
+
+            <!-- DECISIONS -->
+            <section id="tab-decisions" class="tab-content">
+                <div class="tab-header">
+                    <h2>📜 Kararlar</h2>
+                    <p class="tab-subtitle">Tek seferlik aksiyonlar ve kararlar. Büyük alışveriş, tatil planı, doktor randevusu gibi maliyet/ödüllü aksiyonlar buraya.</p>
+                </div>
+                <div class="decisions-controls" style="margin-bottom:10px">
+                    <button class="hoi-btn" onclick="UI.showCreateDecisionCategoryModal()">+ Kategori</button>
+                    <button class="hoi-btn" onclick="UI.showCreateDecisionModal()">+ Karar Ekle</button>
+                </div>
+                <div class="decisions-categories" id="decisions-container"></div>
+            </section>
+
+            <!-- NATIONAL SPIRITS -->
+            <section id="tab-spirits" class="tab-content">
+                <div class="tab-header">
+                    <h2>✨ Ulusal Ruhlar (Kişisel Özellikler)</h2>
+                    <p class="tab-subtitle">Seni tanımlayan özellikler ve durumlar. Sabah insanı, stresli dönem, spor yapan biri — aktif kişilik etkilerin buraya.</p>
+                </div>
+                <div class="spirits-controls">
+                    <button class="hoi-btn" onclick="UI.showAddSpiritModal()">+ Ruh Ekle</button>
+                    <button class="hoi-btn secondary" onclick="UI.showCreateSpiritModal()">+ Yeni Ruh Oluştur</button>
+                </div>
+                <div id="spirits-full-list" class="spirits-full"></div>
+            </section>
+
+            <!-- STATS -->
+            <section id="tab-stats" class="tab-content">
+                <div class="tab-header">
+                    <h2>📊 İstatistikler</h2>
+                    <p class="tab-subtitle">Kaynak değişimlerin ve haftalık raporlar. Tüm ilerlemen burada özetleniyor.</p>
+                </div>
+                <div id="stats-content" class="stats-grid"></div>
+                <div class="resource-charts-section" style="margin-top:20px">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">📈 Kaynak Grafikleri</h3>
+                    <div id="resource-charts"></div>
+                </div>
+                <div class="calendar-section" style="margin-top:20px">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">📅 Takvim</h3>
+                    <div id="calendar-view"></div>
+                </div>
+                <div class="weekly-reports-section" style="margin-top:20px">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">📋 Haftalık Raporlar</h3>
+                    <div id="weekly-reports-list"></div>
+                </div>
+            </section>
+
+            <!-- JOURNAL -->
+            <section id="tab-journal" class="tab-content">
+                <div class="tab-header">
+                    <h2>📓 Savaş Günlüğü</h2>
+                    <p class="tab-subtitle">Günlük düşüncelerin ve ruh halin. Her gün kısaca ne yaptığını, nasıl hissettiğini yaz.</p>
+                </div>
+                <div class="journal-editor">
+                    <div class="journal-today">
+                        <h3>📝 Bugünün Kaydı — <span id="journal-date"></span></h3>
+                        <div class="journal-mood-selector">
+                            <span>Ruh Hali:</span>
+                            <button class="mood-btn" data-mood="great" title="Harika">😄</button>
+                            <button class="mood-btn" data-mood="good" title="İyi">🙂</button>
+                            <button class="mood-btn" data-mood="neutral" title="Normal">😐</button>
+                            <button class="mood-btn" data-mood="bad" title="Kötü">😟</button>
+                            <button class="mood-btn" data-mood="terrible" title="Berbat">😩</button>
+                        </div>
+                        <textarea id="journal-text" rows="6" placeholder="Bugün ne yaptın? Neler hissettin? Notlarını yaz..."></textarea>
+                        <button class="hoi-btn primary" onclick="UI.saveJournalEntry()">💾 Kaydet</button>
+                    </div>
+                </div>
+                <div class="journal-history" style="margin-top:20px">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">📖 Geçmiş Kayıtlar</h3>
+                    <div id="journal-entries-list"></div>
+                </div>
+            </section>
+
+            <!-- ACHIEVEMENTS & CHALLENGES -->
+            <section id="tab-achievements" class="tab-content">
+                <div class="tab-header">
+                    <h2>🏆 Başarımlar & Meydan Okumalar</h2>
+                    <p class="tab-subtitle">Rozetlerin ve kısa süreli challenge'lar. Otomatik açılan başarımlar + kendi koyduğun meydan okumalar buraya.</p>
+                    <div class="achievements-count">
+                        Açılan: <strong id="ach-unlocked-count">0</strong> / <strong id="ach-total-count">0</strong>
+                    </div>
+                </div>
+                <div class="challenges-section">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">🏋 Aktif Meydan Okumalar</h3>
+                    <button class="hoi-btn" onclick="UI.showCreateChallengeModal()" style="margin-bottom:10px">+ Meydan Okuma Oluştur</button>
+                    <div id="challenges-list"></div>
+                </div>
+                <div class="achievements-section" style="margin-top:20px">
+                    <h3 style="color:var(--text-gold);margin-bottom:10px">🏅 Başarımlar</h3>
+                    <div id="achievements-grid" class="achievements-grid"></div>
+                </div>
+            </section>
+
+            <!-- AI ADVISOR -->
+            <section id="tab-advisor" class="tab-content">
+                <div class="tab-header">
+                    <h2>🎖 Kurmay General — Stratejik Danışman</h2>
+                    <p class="tab-subtitle">Yapay zeka danışmanın. Oyun durumunu analiz eder, öncelikleri sıralar ve sana ne yapman gerektiğini söyler.</p>
+                </div>
+                <div id="advisor-content" class="advisor-panel"></div>
+            </section>
+
+            <!-- SETTINGS -->
+            <section id="tab-settings" class="tab-content">
+                <div class="tab-header">
+                    <h2>⚙ Ayarlar</h2>
+                    <p class="tab-subtitle">Profil, gelir, çalışma saatleri ve oyun verisi yönetimi.</p>
+                </div>
+                <div class="settings-panel">
+                    <div class="setting-group">
+                        <h3>👤 Profil</h3>
+                        <label>İsim: <input type="text" id="setting-name" placeholder="Komutan"></label>
+                        <label>Unvan: <input type="text" id="setting-title" placeholder="Hayatının Lideri"></label>
+                        <label>İdeoloji:
+                            <select id="setting-ideology">
+                                <option value="Demokratik">Demokratik</option>
+                                <option value="Komünist">Komünist</option>
+                                <option value="Faşist">Faşist</option>
+                                <option value="Tarafsız">Tarafsız</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <h3>💰 Başlangıç Kaynakları</h3>
+                        <label>Aylık Gelir (₺): <input type="number" id="setting-income" value="10000"></label>
+                        <label>Günlük Serbest Saat: <input type="number" id="setting-free-hours" value="8" min="1" max="16"></label>
+                    </div>
+                    <div class="setting-group">
+                        <h3>🎮 Oyun</h3>
+                        <button class="hoi-btn" onclick="App.saveSettings()">💾 Ayarları Kaydet</button>
+                        <button class="hoi-btn danger" onclick="App.confirmReset()">🗑 Oyunu Sıfırla</button>
+                        <button class="hoi-btn secondary" onclick="App.exportSave()">📤 Kayıt Dışa Aktar</button>
+                        <button class="hoi-btn secondary" onclick="App.importSave()">📥 Kayıt İçe Aktar</button>
+                    </div>
+                    <div class="setting-group">
+                        <h3>🎵 Ses & Bildirimler</h3>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                            <input type="checkbox" id="setting-sound" onchange="App.toggleSound(this.checked)"> Ses Efektleri
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                            <input type="checkbox" id="setting-notif" onchange="App.toggleNotifications(this.checked)"> Tarayıcı Bildirimleri
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <h3>↩ İşlem Geçmişi</h3>
+                        <button class="hoi-btn secondary" onclick="Engine.undo()">↩ Son İşlemi Geri Al</button>
+                        <span style="font-size:12px;color:var(--text-dim)" id="undo-count">0 geri alma noktası</span>
+                    </div>
+                    <div class="setting-group">
+                        <h3>🏁 Hazır Şablonlar</h3>
+                        <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px">Hazır odak, araştırma ve görev paketleri ekle</p>
+                        <button class="hoi-btn primary" onclick="UI.showTemplateSelector()">🏁 Şablon Seç</button>
+                    </div>
+                    <div class="setting-group">
+                        <h3>📰 Olay Yönetimi</h3>
+                        <button class="hoi-btn" onclick="UI.showCreateEventModal()">+ Yeni Olay Oluştur</button>
+                        <button class="hoi-btn secondary" onclick="UI.showManageEventsModal()">📋 Olayları Yönet</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ═══════════════ BOTTOM BAR — Real-Time Display ═══════════════ -->
+    <footer id="bottom-bar">
+        <div class="time-controls">
+            <span class="time-icon">📅</span>
+            <span class="time-real-date" id="real-date-display"></span>
+        </div>
+        <div class="bottom-info">
+            <span id="day-counter">Gün: 0</span>
+            <span id="week-day">Pazartesi</span>
+            <span id="pending-days" class="pending-indicator">Güncel ✓</span>
+        </div>
+        <div class="bottom-alerts" id="bottom-alerts"></div>
+    </footer>
+
+    <!-- ═══════════════ MODAL OVERLAY ═══════════════ -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div id="modal-content" class="modal-content"></div>
+    </div>
+
+    <!-- ═══════════════ EVENT POPUP (HOI4 Style) ═══════════════ -->
+    <div id="event-popup" class="event-popup hidden">
+        <div class="event-popup-inner">
+            <div class="event-header" id="event-header"></div>
+            <div class="event-image" id="event-image"></div>
+            <div class="event-description" id="event-description"></div>
+            <div class="event-options" id="event-options"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ NOTIFICATION TOAST ═══════════════ -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/creators.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
