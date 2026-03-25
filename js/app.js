@@ -69,6 +69,11 @@ const App = {
         if (State.current.onboardingDone) {
             UI.toast('⚔ Hearts of Life başlatıldı! İyi oyunlar, Komutan!', 'success');
         }
+
+        // Initialize Firebase Auth (non-blocking)
+        if (typeof Auth !== 'undefined') {
+            Auth.init();
+        }
     },
 
     // ── Pomodoro Timer ──

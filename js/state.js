@@ -217,10 +217,14 @@ const State = {
         return null;
     },
 
-    // Save to localStorage
+    // Save to localStorage (+ cloud sync)
     save() {
         try {
             localStorage.setItem(this.SAVE_KEY, JSON.stringify(this.current));
+            // Trigger debounced cloud save
+            if (typeof Auth !== 'undefined' && Auth.scheduleSave) {
+                Auth.scheduleSave();
+            }
         } catch (e) {
             console.warn('Failed to save:', e);
         }
